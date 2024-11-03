@@ -1,0 +1,32 @@
+create an HTML file that displays 2 input boxes called "filename" and "input" respectively, and, displays 5 output boxes called "output", "probe A", "probe B", "probe C" and "errors", respectively, and, write a command-line python loop program that receives inputs from the input boxes whenever any input box is changed and sends strings to the output boxes
+
+---
+
+write a command-line node.js loop program that receives inputs from the input boxes whenever any input box is changed and sends strings to the output boxes
+
+---
+
+I get an error "Cannot GET /" when I open a web browser on http://localhost:3000
+
+---
+
+make the output boxes 5 lines long and scrollable
+
+---------
+
+I get an error "ModuleNotFoundError: No module named 'websockets'" when I run "python3 server.py"
+
+---
+---
+---
+
+Create an HTML program that contains one textarea and creates a websocket. Every time the textarea is changed, the program sends the new contents of the textarea to the websocket as a pair of strings. The first string is the name of the textarea, the second string is the updated contents. Then, create a Python program that listens for updates from the websocket.
+
+---
+
+add a button to the html side called "go", when pushed it sends a pair of strings to the websocket, the first string is the id of the button and the second string is the empty string
+
+---
+
+to this add a readonly text area that is updated when the python server sends a pair of strings, the first string is the name of the readonly text area and the second string is the new contents of the text area
+
