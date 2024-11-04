@@ -7,7 +7,7 @@ import json
 import echo
 
 def initialize_hard_coded_test ():
-    root_of_project = ','
+    root_of_project = '.'
     root_of_0D = '.'
     arg = 'testing...'
     main_container_name = 'main'
