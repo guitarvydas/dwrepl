@@ -1,3 +1,14 @@
+import os
+import json
+import sys
+import re
+import subprocess
+import shlex
+import queue
+
+import output
+
+
 counter = 0
 
 def gensymbol (s):
@@ -281,7 +292,7 @@ def log_forward (sender, sender_port, msg, cause_msg):
     pass # when needed, it is too frequent to bother logging
 
 def fmt_forward (desc):
-    outputError (f"*** Error fmt_forward {desc}")
+    output.stderr (f"*** Error fmt_forward {desc}")
     quit ()
 
 ####
@@ -504,7 +515,7 @@ def container_instantiator (reg, owner, container_name, desc):
             connector.direction = "up"
             source_component = children_by_id [proto_conn ['source']['id']]
             if source_component == None:
-                outputError (f"internal error: .Up connection source not ok {proto_conn ['source']}")
+                output.stderr (f"internal error: .Up connection source not ok {proto_conn ['source']}")
             else:
                 connector.sender = Sender (source_component.name, source_component, proto_conn ['source_port'])
                 connector.receiver = Receiver (self.name, container.outq, proto_conn ['target_port'], self)
@@ -658,18 +669,18 @@ def route (container, from_component, message):
                 deposit (container, connector, message)
                 was_sent = True
     if not (was_sent): 
-        outputError ("\n\n*** Error: ***")
+        output.stderr ("\n\n*** Error: ***")
         dump_possible_connections (container)
-        outputError_routing_trace (container)
-        outputError ("***")
-        outputError (f"{container.name}: message '{message.port}' from {fromname} dropped on floor...")
-        outputError ("***")
+        output.stderr_routing_trace (container)
+        output.stderr ("***")
+        output.stderr (f"{container.name}: message '{message.port}' from {fromname} dropped on floor...")
+        output.stderr ("***")
         exit ()
 
 def dump_possible_connections (container):      
-    outputError (f"*** possible connections for {container.name}:")
+    output.stderr (f"*** possible connections for {container.name}:")
     for connector in container.connections:
-        outputError (f"{connector.direction} ❲{connector.sender.name}❳.“{connector.sender.port}” -> ❲{connector.receiver.name}❳.“{connector.receiver.port}”")
+        output.stderr (f"{connector.direction} ❲{connector.sender.name}❳.“{connector.sender.port}” -> ❲{connector.receiver.name}❳.“{connector.receiver.port}”")
 
 def any_child_ready (container):
     for child in container.children:
@@ -681,7 +692,7 @@ def child_is_ready (eh):
     return (not (eh.outq.empty ())) or (not (eh.inq.empty ())) or ( eh.state != "idle") or (any_child_ready (eh))
 
 def print_routing_trace (eh):
-    outputError (routing_trace_all (eh))
+    output.stderr (routing_trace_all (eh))
 
 def append_routing_descriptor (container, desc):
     container.routings.put (desc)
@@ -702,16 +713,13 @@ def log_connection (container, connector, message):
         log_through (container=container, source_port=connector.sender.port, source_message=None,
                      target_port=connector.receiver.port, message=message)
     else:
-        outputError (f"*** FATAL error: in log_connection /{connector.direction}/ /{message.port}/ /{message.datum.srepr ()}/")
+        output.stderr (f"*** FATAL error: in log_connection /{connector.direction}/ /{message.port}/ /{message.datum.srepr ()}/")
         exit ()
         
 ####
 def container_injector (container, message):
     log_inject (receiver=container, port=message.port, msg=message)
     container_handler (container, message)
-import os
-import json
-import sys
 
 class Component_Registry:
     def __init__ (self):
@@ -730,10 +738,10 @@ def read_and_convert_json_file (filename):
             routings = json.loads(json_data)
             return routings
     except FileNotFoundError:
-        outputError (f"File not found: {filename}")
+        output.stderr (f"File not found: {filename}")
         return None
     except json.JSONDecodeError as e:
-        outputError (f"Error decoding JSON in file: {e}")
+        output.stderr (f"Error decoding JSON in file: {e}")
         return None
 
 def json2internal (container_xml):
@@ -787,21 +795,19 @@ def calculate_depth (eh):
         return 1 + calculate_depth (eh.owner)
     
 def dump_registry (reg):
-    outputError ()
-    outputError ("*** PALETTE ***")
+    output.stderr ()
+    output.stderr ("*** PALETTE ***")
     for c in reg.templates:
-        outputError (c.name)
-    outputError ("***************")
-    outputError ()
+        output.stderr (c.name)
+    output.stderr ("***************")
+    output.stderr ()
 
-def outputError_stats (reg):
-    outputError (f"registry statistics: {reg.stats}")
+def error_stats (reg):
+    output.stderr (f"registry statistics: {reg.stats}")
 
 def mangle_name (s):
     # trim name to remove code from Container component names - deferred until later (or never)
     return s
-
-import subprocess
 
 def generate_shell_components (reg, container_list):
     # [
@@ -857,8 +863,6 @@ def run_command (eh, cmd, s):
 # function may want whenever it is invoked again.
 #
 
-import queue
-import sys
 
 
 # Eh_States :: enum { idle, active }
@@ -940,7 +944,7 @@ def output_list (eh):
 # Utility for printing an array of messages.
 def print_output_list (eh):
     for m in list (eh.outq.queue):
-        outputStdout (format_message (m))
+        output.stdout (format_message (m))
 
 def spaces (n):
     s = ""
@@ -968,18 +972,14 @@ def print_specific_output (eh, port="", stderr=False):
             f = sys.stderr
         else:
             f = sys.stdout
-        outputStdout (datum.srepr (), file=f)
+        output.stdout (datum.srepr (), file=f)
 
 def put_output (eh, msg):
     eh.outq.put (msg)
     
 def injector_NIY (eh, msg):
-    outputError (f'Injector not implemented for this component "{eh.name}" kind={eh.kind} port="{msg.port}"')
+    output.stderr (f'Injector not implemented for this component "{eh.name}" kind={eh.kind} port="{msg.port}"')
     exit ()
-import sys
-import re
-import subprocess
-import shlex
 
 root_project = ""
 root_0D = ""
@@ -1243,7 +1243,6 @@ def string_make_persistent (s):
     return s
 def string_clone (s):
     return s
-import sys
 
 # usage: app ${_00_} ${_0D_} arg main diagram_filename1 diagram_filename2 ...
 # where ${_00_} is the root directory for the project
@@ -1277,25 +1276,25 @@ def print_error_maybe (main_container):
     error_port = "✗"
     err = fetch_first_output (main_container, error_port)
     if (err != None) and (0 < len (trimws (err.srepr ()))):
-        outputError ("--- !!! ERRORS !!! ---")
+        output.stderr ("--- !!! ERRORS !!! ---")
         print_specific_output (main_container, error_port, False)
 
 
 # debugging helpers
 
 def dump_outputs (main_container):
-    outputStdout ("")
-    outputStdout ("--- Outputs ---")
+    output.stdout ("")
+    output.stdout ("--- Outputs ---")
     print_output_list (main_container)
 
 def trace_outputs (main_container):
-    outputStdout ("")
-    outputStdout ("--- Message Traces ---")
+    output.stdout ("")
+    output.stdout ("--- Message Traces ---")
     print_routing_trace (main_container)
 
 def dump_hierarchy (main_container):
-    outputStdout ("")
-    outputStdout (f"--- Hierarchy ---{(build_hierarchy (main_container))}")
+    output.stdout ("")
+    output.stdout (f"--- Hierarchy ---{(build_hierarchy (main_container))}")
 
 def build_hierarchy (c):
     s = ""
@@ -1307,11 +1306,11 @@ def build_hierarchy (c):
     return f"\n{indent}({c.name}{s})"
 
 def dump_connections (c):
-    outputStdout ("")
-    outputStdout (f"--- connections ---")
+    output.stdout ("")
+    output.stdout (f"--- connections ---")
     dump_possible_connections (c)
     for child in c.children:
-        outputStdout ("")
+        output.stdout ("")
         dump_possible_connections (child)
 
 #
@@ -1327,13 +1326,13 @@ runtime_errors = False
 
 def load_error (s):
     global load_errors
-    outputError (s)
+    output.stderr (s)
     quit ()
     load_errors = True
 
 def runtime_error (s):
     global runtime_errors
-    outputError (s)
+    output.stderr (s)
     quit ()
     runtime_errors = True
 
@@ -1461,10 +1460,10 @@ def start (palette, env, show_hierarchy=False, show_connections=False, show_trac
             print_error_maybe (main_container)
             print_specific_output (main_container, port="", stderr=False)
             if show_traces:
-                outputStdout ("--- routing traces ---")
-                outputStdout (routing_trace_all (main_container))
+                output.stdout ("--- routing traces ---")
+                output.stdout (routing_trace_all (main_container))
         if show_all_outputs:
-            outputStdout ("--- done ---")
+            output.stdout ("--- done ---")
 
 
 
@@ -1477,10 +1476,6 @@ def send_bang (eh, port, causing_message):
     datum = new_datum_bang ()
     send (eh, port, datum, causing_message)            
 
-def outputStdout (s):
-    print (s)
-
-def outputError (s):
-    print (s)
     
 
+ 
