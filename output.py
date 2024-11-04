@@ -1,6 +1,13 @@
-def stdout (s):
-    print (s)
+buffers = { "stdout" : "", "stderr" : "", "A" : "", "B" : "", "C" : ""}
 
-def stderr (s):
-    print (s)
+def reset ():
+    global buffers
+    buffers = { "stdout" : "", "stderr" : "", "A" : "", "B" : "", "C" : ""}
     
+def append (buffname, s):
+    global buffers
+    buffers [buffname] += (s + '\n')
+
+def get (buffname):
+    global buffers
+    return buffers [buffname]
