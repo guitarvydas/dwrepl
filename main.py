@@ -8,10 +8,9 @@ import subprocess
 
 import echo
 
-def initialize_hard_coded_test ():
+def initialize_hard_coded_test (arg):
     root_of_project = '.'
     root_of_0D = '.'
-    arg = 'pt was here...'
     main_container_name = 'main'
     diagram_names = ['test.drawio.json']
     palette = zd.initialize_component_palette (root_of_project, root_of_0D, diagram_names)
@@ -27,26 +26,31 @@ def transpileDiagram (fname):
     else:
         return output.append ("stdout", ret.stdout)
 
-def interpretDiagram ():
-    [palette, env] = initialize_hard_coded_test ()
+def interpretDiagram (arg):
+    [palette, env] = initialize_hard_coded_test (arg)
     echo.install (palette)
     zd.start (palette, env)
 
 ############
 
+inputBuffer = ""
+filenameBuffer = ""
+
 async def handler(websocket, path):
+    global inputBuffer, filenameBuffer
     print("WebSocket connection established.")
     async for message in websocket:
+        print (f'handler received {message}')
         data = json.loads(message)
         element_name = data['name']
-        content = ''
+        content = data ['content']
 
-        if element_name == 'goButton':
+        if element_name == 'input' and content [-1] == '\n':
             output.reset ()
             print ("transpiling diagram")
             transpileDiagram ('test.drawio')
             print ("running diagram")
-            interpretDiagram ()
+            interpretDiagram (inputBuffer)
             print ("sending output")
 
             # Respond with an update for the readonly textarea
@@ -60,6 +64,10 @@ async def handler(websocket, path):
             print (output.buffers)
             response_message = jsondumps
             await websocket.send(response_message)
+        elif element_name == 'input':
+            inputBuffer = content
+        elif element_name == 'filename':
+            filenameBuffer = content
 
 async def main():
     async with websockets.serve(handler, "localhost", 6789):

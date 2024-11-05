@@ -15,7 +15,7 @@
     <textarea id="filename" rows="1" cols="80" placeholder="Type .drawio filename here..."></textarea>
     
     <h3>Input:</h3>
-    <textarea id="myTextarea" rows="3" cols="80" placeholder="Type input text here..."></textarea>
+    <textarea id="input" rows="3" cols="80" placeholder="Type input text here..."></textarea>
     
     <!-- Readonly textarea to display server responses -->
     <h3>Output:</h3>
@@ -25,23 +25,24 @@
     <textarea id="output" rows="1" cols="30" readonly></textarea>
 
     <h3>Probes (A,B,C):</h3>
-    <textarea id="A" rows="1" cols="30" readonly></textarea>
+    <textarea id="A" rows="3" cols="30" readonly></textarea>
 
-    <textarea id="B" rows="1" cols="30" readonly></textarea>
+    <textarea id="B" rows="3" cols="30" readonly></textarea>
 
-    <textarea id="C" rows="1" cols="30" readonly></textarea>
+    <textarea id="C" rows="3" cols="30" readonly></textarea>
 
     <script>
         // Open a WebSocket connection to the server
         const socket = new WebSocket('ws://localhost:6789');
 
         // Get the textarea, button, and readonly textarea elements
-        const textarea = document.getElementById('myTextarea');
+        const textarea = document.getElementById('input');
         const goButton = document.getElementById('goButton');
         const output = document.getElementById('output');
 
         // Send the content of the textarea on input change
-        textarea.addEventListener('input', () => {
+      textarea.addEventListener('input', () => {
+	  console.log (`input event ${textarea.id} ${textarea.value}`);
             if (socket.readyState === WebSocket.OPEN) {
                 const message = JSON.stringify({
                     name: textarea.id,
