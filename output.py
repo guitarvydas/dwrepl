@@ -1,13 +1,19 @@
-buffers = { "stdout" : "", "stderr" : "", "A" : "", "B" : "", "C" : ""}
+buffers = { }
 
 def reset ():
     global buffers
-    buffers = { "stdout" : "", "stderr" : "", "A" : "", "B" : "", "C" : ""}
+    buffers = { }
     
 def append (buffname, s):
     global buffers
+    if not buffname in buffers:
+        buffers [buffname] = ""
     buffers [buffname] += (s + '\n')
 
 def get (buffname):
     global buffers
-    return buffers [buffname]
+    if buffname in buffers:
+        return buffers [buffname]
+    else:
+        return ""
+    

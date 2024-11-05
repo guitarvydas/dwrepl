@@ -48,13 +48,17 @@ async def handler(websocket, path):
             print ("running diagram")
             interpretDiagram ()
             print ("sending output")
-            content = output.get ("stdout")
 
             # Respond with an update for the readonly textarea
-            response_message = json.dumps({
-                "name": "output",
-                "content": f"{content}"
+            jsondumps = json.dumps({
+                "output": output.get ("stdout"),
+                "A": output.get ("A"),
+                "B": output.get ("B"),
+                "C": output.get ("C"),
             })
+            print (f'sending {jsondumps}')
+            print (output.buffers)
+            response_message = jsondumps
             await websocket.send(response_message)
 
 async def main():

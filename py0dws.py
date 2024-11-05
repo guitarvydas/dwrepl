@@ -943,6 +943,7 @@ def output_list (eh):
 
 # Utility for printing an array of messages.
 def print_output_list (eh):
+    print (f'print_output_list {list (eh.outq.queue)}')
     for m in list (eh.outq.queue):
         output.append ("stdout",  format_message (m))
 
@@ -970,9 +971,10 @@ def print_specific_output (eh, port="", stderr=False):
     if datum != None:
         if stderr:              # I don't remember why I found it useful to print to stderr during bootstrapping, so I've left it in...
             f = sys.stderr
+            output.append ("stderr",  datum.srepr ())
         else:
             f = sys.stdout
-        output.append ("stdout",  datum.srepr (), file=f)
+            output.append ("stdout",  datum.srepr ())
 
 def put_output (eh, msg):
     eh.outq.put (msg)
@@ -993,28 +995,37 @@ def set_environment (rproject, r0D):
 ####
 
 def probe_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym ("?")
+    name_with_id = gensymbol ("?")
     return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probe_handler)
 
 def probeA_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym ("?A")
-    return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probe_handler)
+    name_with_id = gensymbol ("?A")
+    return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probeA_handler)
 
 def probeB_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym("?B")
-    return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probe_handler)
+    name_with_id = gensymbol ("?B")
+    return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probeB_handler)
 
 def probeC_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym("?C")
-    return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probe_handler)
+    name_with_id = gensymbol ("?C")
+    return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=probeC_handler)
 
 def probe_handler (eh, msg):
     s = msg.datum.srepr ()
-    outputProbe (f"... probe {eh.name}: {s}", file=sys.stderr)
+    print (f"... probe {eh.name}: {s}", file=sys.stderr)
+def probeA_handler (eh, msg):
+    s = msg.datum.srepr ()
+    output.append ("A", s)
+def probeB_handler (eh, msg):
+    s = msg.datum.srepr ()
+    output.append ("B", s)
+def probeC_handler (eh, msg):
+    s = msg.datum.srepr ()
+    output.append ("C", s)
 
     
 def trash_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym ("trash")
+    name_with_id = gensymbol ("trash")
     return make_leaf (name=name_with_id, owner=owner, instance_data=None, handler=trash_handler)
 def trash_handler (eh, msg):
     # to appease dumped-on-floor checker
@@ -1039,7 +1050,7 @@ def reclaim_Buffers_from_heap (inst):
     pass
 
 def deracer_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym ("deracer")
+    name_with_id = gensymbol ("deracer")
     inst = Deracer_Instance_Data (buffer=TwoMessages ())
     inst.state = "idle"
     eh = make_leaf (name=name_with_id, owner=owner, instance_data=inst, handler=deracer_handler)
@@ -1088,7 +1099,7 @@ def deracer_handler (eh, msg):
 ####
 
 def low_level_read_text_file_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym("Low Level Read Text File")
+    name_with_id = gensymbol ("Low Level Read Text File")
     return make_leaf (name_with_id, owner, None, low_level_read_text_file_handler)
 
 
@@ -1115,7 +1126,7 @@ def low_level_read_text_file_handler (eh, msg):
 
 ####
 def ensure_string_datum_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym("Ensure String Datum")
+    name_with_id = gensymbol ("Ensure String Datum")
     return make_leaf (name_with_id, owner, None, ensure_string_datum_handler)
 
 
@@ -1137,7 +1148,7 @@ class Syncfilewrite_Data:
 # temp copy for bootstrap, sends "done" (error during bootstrap if not wired)
 
 def syncfilewrite_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym ("syncfilewrite")
+    name_with_id = gensymbol ("syncfilewrite")
     inst = Syncfilewrite_Data ()
     return make_leaf (name_with_id, owner, inst, syncfilewrite_handler)
 
@@ -1165,7 +1176,7 @@ class StringConcat_Instance_Data:
         self.count = 0
 
 def stringconcat_instantiate (reg, owner, name, template_data):      
-    name_with_id = gensym ("stringconcat")
+    name_with_id = gensymbol ("stringconcat")
     instp = StringConcat_Instance_Data ()
     return make_leaf (name_with_id, owner, instp, stringconcat_handler)
 
@@ -1206,7 +1217,7 @@ def maybe_stringconcat (eh, inst, msg):
 
 # this needs to be rewritten to use the low-level "shell_out" component, this can be done solely as a diagram without using python code here
 def shell_out_instantiate (reg, owner, name, template_data):
-    name_with_id = gensym ("shell_out")
+    name_with_id = gensymbol ("shell_out")
     cmd = shlex.split (template_data)
     return make_leaf (name_with_id, owner, cmd, shell_out_handler)
 
@@ -1224,7 +1235,7 @@ def shell_out_handler (eh, msg):
 def string_constant_instantiate (reg, owner, name, template_data):
     global root_project
     global root_0D
-    name_with_id = gensym ("strconst")
+    name_with_id = gensymbol ("strconst")
     s = template_data
     if root_project != "":
         s  = re.sub ("_00_", root_project, s)
@@ -1283,13 +1294,9 @@ def print_error_maybe (main_container):
 # debugging helpers
 
 def dump_outputs (main_container):
-    output.append ("stdout",  "")
-    output.append ("stdout",  "--- Outputs ---")
     print_output_list (main_container)
 
 def trace_outputs (main_container):
-    output.append ("stdout",  "")
-    output.append ("stdout",  "--- Message Traces ---")
     print_routing_trace (main_container)
 
 def dump_hierarchy (main_container):
@@ -1338,7 +1345,7 @@ def runtime_error (s):
 
     
 def fakepipename_instantiate (reg, owner, name, template_data):
-    instance_name = gensym ("fakepipe")
+    instance_name = gensymbol ("fakepipe")
     return make_leaf (instance_name, owner, None, fakepipename_handler)
 
 rand = 0
@@ -1356,7 +1363,7 @@ class OhmJS_Instance_Data:
         self.s = None
 
 def ohmjs_instantiate (reg, owner, name, template_data):
-    instance_name = gensym ("OhmJS")
+    instance_name = gensymbol ("OhmJS")
     inst = OhmJS_Instance_Data () # all fields have zero value before any messages are received
     return make_leaf (instance_name, owner, inst, ohmjs_handle)
 
@@ -1435,7 +1442,7 @@ def initialize ():
     palette = initialize_component_palette (root_project, root_0D, diagram_names)
     return [palette, [root_of_project, root_of_0D, main_container_name, diagram_names, arg]]
 
-def start (palette, env, show_hierarchy=False, show_connections=False, show_traces=False, show_all_outputs=True):
+def start (palette, env, show_hierarchy=False, show_connections=False, show_traces=False, show_all_outputs=False):
     root_of_project = env [0]
     root_of_0D = env [1]
     main_container_name = env [2]
