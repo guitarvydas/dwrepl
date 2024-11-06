@@ -1,0 +1,120 @@
+To periodically check if a file on disk has changed, you can use Python's `os.path.getmtime` function to get the last modification time of the file. By comparing the modification time at regular intervals, you can detect any changes.
+
+Here's an example code snippet that checks if a file has changed every few seconds:
+
+```python
+import os
+import time
+
+def watch_file(filepath, interval=5):
+    """Periodically checks if a file has changed based on its modification time."""
+    if not os.path.exists(filepath):
+        print(f"File '{filepath}' does not exist.")
+        return
+
+    # Get the initial modification time
+    last_mod_time = os.path.getmtime(filepath)
+    print(f"Watching file: {filepath}")
+
+    try:
+        while True:
+            # Wait for the specified interval
+            time.sleep(interval)
+
+            # Get the current modification time
+            current_mod_time = os.path.getmtime(filepath)
+
+            # Check if the file modification time has changed
+            if current_mod_time != last_mod_time:
+                print(f"File '{filepath}' has been modified.")
+                last_mod_time = current_mod_time
+            else:
+                print(f"No changes in '{filepath}'")
+
+    except KeyboardInterrupt:
+        print("Stopped watching the file.")
+
+# Example usage:
+filepath = "path/to/your/file.txt"  # Replace with your file path
+watch_file(filepath, interval=5)  # Check every 5 seconds
+```
+
+### Explanation
+
+- **`os.path.getmtime(filepath)`**: Gets the last modification time of the file in seconds since the epoch.
+- **`time.sleep(interval)`**: Pauses the loop for the specified interval (in seconds).
+- **Comparing modification times**: Each loop checks if the modification time has changed compared to the last recorded time.
+  
+### Usage
+
+Replace `"path/to/your/file.txt"` with the path of the file you want to monitor. This code will print a message if the file is modified. You can stop the program with `Ctrl+C` (which raises `KeyboardInterrupt`).
+
+
+---
+
+
+
+To allow the file-checking routine to coexist with another `async` function, we can use `asyncio`. In this case, we’ll create an asynchronous function (`async def`) that periodically checks for changes in the file without blocking other asynchronous tasks.
+
+Here’s how to implement this:
+
+1. Use `await asyncio.sleep(interval)` to pause between checks without blocking the event loop.
+2. Define the file-watching function as an asynchronous function (`async def`), which can then coexist with other async routines.
+
+Here’s the complete code:
+
+```python
+import asyncio
+import os
+
+async def watch_file(filepath, interval=5):
+    """Asynchronously checks if a file has changed based on its modification time."""
+    if not os.path.exists(filepath):
+        print(f"File '{filepath}' does not exist.")
+        return
+
+    # Get the initial modification time
+    last_mod_time = os.path.getmtime(filepath)
+    print(f"Watching file: {filepath}")
+
+    while True:
+        await asyncio.sleep(interval)  # Non-blocking sleep for the specified interval
+
+        # Get the current modification time
+        current_mod_time = os.path.getmtime(filepath)
+
+        # Check if the file modification time has changed
+        if current_mod_time != last_mod_time:
+            print(f"File '{filepath}' has been modified.")
+            last_mod_time = current_mod_time
+        else:
+            print(f"No changes in '{filepath}'")
+
+# Example of another async function that could coexist with the file-watching coroutine
+async def other_async_routine():
+    while True:
+        await asyncio.sleep(3)
+        print("Running another asynchronous task.")
+
+# Main entry point to run both async functions concurrently
+async def main():
+    filepath = "path/to/your/file.txt"  # Replace with the path to your file
+    await asyncio.gather(
+        watch_file(filepath, interval=5),
+        other_async_routine(),
+    )
+
+# Run the main function
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Explanation
+
+1. **`watch_file`**: This function checks for changes in the file asynchronously. It uses `await asyncio.sleep(interval)` to avoid blocking the event loop, allowing other async functions to run.
+2. **`other_async_routine`**: A sample async function that prints a message every few seconds. It demonstrates how another async function can coexist with `watch_file`.
+3. **`asyncio.gather`**: In `main`, we use `asyncio.gather` to run both `watch_file` and `other_async_routine` concurrently.
+
+### Usage
+
+Replace `"path/to/your/file.txt"` with the path to the file you want to monitor. Run the script, and it will check for file changes while also running any other async tasks. This code will run both functions without blocking each other, making it suitable for use in an asynchronous environment.

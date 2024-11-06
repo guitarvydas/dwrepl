@@ -8,9 +8,6 @@
 <body>
     <h1>Drawware IDE</h1>
     
-    <!-- Go button -->
-    <button id="goButton" style="width:100px;background:#F7DFDA;border-radius:6px">Go</button>
-
     <!-- Editable textarea -->
     <textarea id="filename" rows="1" cols="80" placeholder="Type .drawio filename here..."></textarea>
     
@@ -36,32 +33,31 @@
         const socket = new WebSocket('ws://localhost:6789');
 
         // Get the textarea, button, and readonly textarea elements
-        const textarea = document.getElementById('input');
-        const goButton = document.getElementById('goButton');
+        const inputarea = document.getElementById('input');
+        const filenamearea = document.getElementById('filename');
         const output = document.getElementById('output');
 
-        // Send the content of the textarea on input change
-      textarea.addEventListener('input', () => {
-	  console.log (`input event ${textarea.id} ${textarea.value}`);
-            if (socket.readyState === WebSocket.OPEN) {
-                const message = JSON.stringify({
-                    name: textarea.id,
-                    content: textarea.value
-                });
-                socket.send(message);
-            }
-        });
+      // Send the content of the 'input' textarea on input change
+      inputarea.addEventListener('input', () => {
+          if (socket.readyState === WebSocket.OPEN) {
+              const message = JSON.stringify({
+                  name: inputarea.id,
+                  content: inputarea.value
+              });
+              socket.send(message);
+          }
+      });
 
-        // Send an empty string with the button's ID when the button is clicked
-        goButton.addEventListener('click', () => {
-            if (socket.readyState === WebSocket.OPEN) {
-                const message = JSON.stringify({
-                    name: goButton.id,
-                    content: ""
-                });
-                socket.send(message);
-            }
-        });
+      // Send the content of the 'filename' textarea on input change
+      filenamearea.addEventListener('input', () => {
+          if (socket.readyState === WebSocket.OPEN) {
+              const message = JSON.stringify({
+                  name: filenamearea.id,
+                  content: filenamearea.value
+              });
+              socket.send(message);
+          }
+      });
 
         // Handle incoming messages from the server
         socket.addEventListener('message', (event) => {
