@@ -30,3 +30,8 @@ add a button to the html side called "go", when pushed it sends a pair of string
 
 to this add a readonly text area that is updated when the python server sends a pair of strings, the first string is the name of the readonly text area and the second string is the new contents of the text area
 
+---
+---
+---
+
+write Python code that runs 2 coroutines forever, routine 1 checks whether a file has been modified, routine 2 communicates with a websocket. Routine 1 calls "rerun" whenever the checked file has been modified, and routine 2 calls the same "rerun" whenever it notices a pattern in the incoming messages from the websocket. "Rerun" produces text output that it sends to the websocket.
