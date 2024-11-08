@@ -35,3 +35,14 @@ to this add a readonly text area that is updated when the python server sends a 
 ---
 
 write Python code that runs 2 coroutines forever, routine 1 checks whether a file has been modified, routine 2 communicates with a websocket. Routine 1 calls "rerun" whenever the checked file has been modified, and routine 2 calls the same "rerun" whenever it notices a pattern in the incoming messages from the websocket. "Rerun" produces text output that it sends to the websocket.
+
+---
+---
+---
+
+Write Python code that runs 2 coroutines forever and serves 2 websockets.
+
+Routine 1 checks whether a file has been modified and calls a function that sends a message to websocket 1 when the file has changed.
+
+Routine 2 responds to messages from websocket 2 by calling a function that sends a message to websocket 2.
+

@@ -353,10 +353,202 @@ Using WebSockets at a low level in Python with `asyncio` and `websockets` involv
 - Working with `websockets.serve` and `websockets.connect` to establish and manage WebSocket connections between clients and servers.
 
 This setup allows Python applications to maintain efficient, real-time, bidirectional communication over a single TCP connection with WebSocket-compatible clients, such as modern web browsers or other networked applications.
+
+# Two Websocket Servers
+Running two WebSocket servers concurrently in Python can be accomplished by using `asyncio` to create two separate server instances, each listening on a different port or IP address. Here's how you can set up and run two WebSocket servers at the same time using `asyncio` and `websockets`.
+
+### Example: Running Two WebSocket Servers Concurrently
+
+```python
+import asyncio
+import websockets
+
+# First WebSocket server handler
+async def server_handler_1(websocket, path):
+    print("Client connected to Server 1")
+    try:
+        async for message in websocket:
+            print(f"Server 1 received: {message}")
+            await websocket.send(f"Server 1 echo: {message}")
+    except websockets.ConnectionClosed:
+        print("Client disconnected from Server 1")
+
+# Second WebSocket server handler
+async def server_handler_2(websocket, path):
+    print("Client connected to Server 2")
+    try:
+        async for message in websocket:
+            print(f"Server 2 received: {message}")
+            await websocket.send(f"Server 2 echo: {message}")
+    except websockets.ConnectionClosed:
+        print("Client disconnected from Server 2")
+
+# Function to start both WebSocket servers
+async def start_servers():
+    # Start Server 1 on port 8765
+    server_1 = await websockets.serve(server_handler_1, "localhost", 8765)
+    print("Server 1 started on ws://localhost:8765")
+
+    # Start Server 2 on port 8766
+    server_2 = await websockets.serve(server_handler_2, "localhost", 8766)
+    print("Server 2 started on ws://localhost:8766")
+
+    # Keep the servers running indefinitely
+    await asyncio.gather(server_1.wait_closed(), server_2.wait_closed())
+
+# Run the servers
+asyncio.run(start_servers())
+```
+
+### Explanation
+
+1. **Two Separate Handlers**: 
+   - `server_handler_1` and `server_handler_2` are two separate WebSocket handlers, each printing and echoing messages independently.
+   
+2. **Starting Two Servers**:
+   - `websockets.serve(server_handler_1, "localhost", 8765)` starts the first server on port 8765.
+   - `websockets.serve(server_handler_2, "localhost", 8766)` starts the second server on port 8766.
+
+3. **Concurrency with `asyncio.gather`**:
+   - `asyncio.gather()` runs both servers concurrently, meaning they can handle connections independently and won’t block each other.
+
+4. **Indefinite Running**:
+   - `await asyncio.gather(server_1.wait_closed(), server_2.wait_closed())` keeps both servers running indefinitely. This is crucial, as otherwise, the program would end after starting the servers.
+
+### Running and Testing
+
+1. **Start the servers**:
+   - Run this script in the terminal to start both WebSocket servers on `ws://localhost:8765` and `ws://localhost:8766`.
+
+2. **Connecting Clients**:
+   - You can connect separate WebSocket clients to each server endpoint to test communication (e.g., by running multiple instances of a WebSocket client script or using a WebSocket client tool).
+
+This approach allows you to easily scale the number of WebSocket servers by adding more `websockets.serve` calls with different handlers and ports. Each server runs in parallel, utilizing Python's `asyncio` capabilities for concurrent handling.
+
+# 2 WebSocket Handlers
+## Prompt
+Write Python code that runs 2 coroutines forever and serves 2 websockets.
+
+Routine 1 checks whether a file has been modified and calls a function that sends a message to websocket 1 when the file has changed.
+
+Routine 2 responds to messages from websocket 2 by calling a function that sends a message to websocket 2.
+
+## Response 
+To accomplish this, we’ll use `asyncio` to run two forever-running coroutines in parallel and `websockets` to create two separate WebSocket servers. Here’s a breakdown of the solution:
+
+1. **Routine 1**: Checks if a specific file has been modified. When a modification is detected, it will send a message to WebSocket Server 1 (on port 8765).
+2. **Routine 2**: Listens for incoming messages on WebSocket Server 2 (on port 8766) and responds to the client with a reply message.
+
+Here’s the code:
+
+```python
+import asyncio
+import os
+import time
+import websockets
+
+# Path to the file to monitor for changes
+FILE_PATH = "watched_file.txt"
+
+# Last known modification time of the file
+last_mod_time = None
+
+# Routine 1: Check for file changes and send message to WebSocket 1
+async def file_watcher(websocket_1):
+    global last_mod_time
+    print("Starting file watcher routine")
+
+    while True:
+        try:
+            # Check file modification time
+            current_mod_time = os.path.getmtime(FILE_PATH)
+            if last_mod_time is None or current_mod_time != last_mod_time:
+                last_mod_time = current_mod_time
+                print("File modified. Sending update to WebSocket 1")
+                
+                # Send a notification to WebSocket 1
+                await websocket_1.send("File has been modified")
+                
+            # Check for changes every 2 seconds
+            await asyncio.sleep(2)
+        
+        except FileNotFoundError:
+            print("File not found. Waiting for it to appear...")
+            await asyncio.sleep(2)  # Retry if the file doesn't exist
+
+# Routine 2: Listen for messages from WebSocket 2 and respond
+async def websocket_2_handler(websocket, path):
+    print("Client connected to WebSocket 2")
+    try:
+        async for message in websocket:
+            print(f"Received from WebSocket 2: {message}")
+            response = f"Server response: {message[::-1]}"  # Example response (reversed message)
+            await websocket.send(response)
+    except websockets.ConnectionClosed:
+        print("Client disconnected from WebSocket 2")
+
+# WebSocket Server 1: Placeholder for file watcher to connect and send updates
+async def websocket_1_server_handler(websocket, path):
+    print("WebSocket 1 server handler started")
+    await file_watcher(websocket)
+
+# Function to start both WebSocket servers
+async def start_servers():
+    # Start WebSocket Server 1 on port 8765 (for file watcher)
+    websocket_1_server = await websockets.serve(websocket_1_server_handler, "localhost", 8765)
+    print("WebSocket 1 server started on ws://localhost:8765")
+
+    # Start WebSocket Server 2 on port 8766 (for client communication)
+    websocket_2_server = await websockets.serve(websocket_2_handler, "localhost", 8766)
+    print("WebSocket 2 server started on ws://localhost:8766")
+
+    # Keep both servers running indefinitely
+    await asyncio.gather(websocket_1_server.wait_closed(), websocket_2_server.wait_closed())
+
+# Run the servers
+asyncio.run(start_servers())
+```
+
+### Explanation of the Code
+
+1. **File Monitoring Routine (`file_watcher`)**:
+   - This routine checks the modification time of `watched_file.txt` every 2 seconds.
+   - If the file is modified, it updates `last_mod_time` and sends a message to WebSocket 1.
+   
+2. **WebSocket Server 1 Handler (`websocket_1_server_handler`)**:
+   - This handler runs `file_watcher`, passing it the WebSocket connection so that it can send messages about file modifications.
+   - WebSocket Server 1 listens on port 8765.
+
+3. **WebSocket Server 2 Handler (`websocket_2_handler`)**:
+   - This server listens for client messages on WebSocket Server 2 (port 8766).
+   - When it receives a message from a client, it responds with a transformed version of the message (in this example, reversing the message).
+
+4. **Server Initialization (`start_servers`)**:
+   - We use `websockets.serve()` to start both servers on separate ports.
+   - `asyncio.gather()` keeps both servers running concurrently.
+
+### Running the Code
+
+1. Start this Python script.
+2. Open a WebSocket client (e.g., using a browser WebSocket tester or a custom client) to connect to `ws://localhost:8765` to receive file change notifications.
+3. Open another client and connect to `ws://localhost:8766` to send messages and receive responses from the second WebSocket server.
+
+This setup allows both coroutines and WebSocket servers to run concurrently in the same `asyncio` event loop.
 # Appendix - Prompt
 
+## 1
 The above is ChatGPTs answer to the prompt "explain asyncio at a low level".
 
+## 2
 A second prompt was used "what's the difference between coroutines and tasks?"
 
+## 3
 "explain how to use websockets in Python at a low level"
+
+## 4
+"Write Python code that runs 2 coroutines forever and serves 2 websockets.
+
+Routine 1 checks whether a file has been modified and calls a function that sends a message to websocket 1 when the file has changed.
+
+Routine 2 responds to messages from websocket 2 by calling a function that sends a message to websocket 2.
+"
