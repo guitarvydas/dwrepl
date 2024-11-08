@@ -63,6 +63,7 @@ last_mod_time = None
 # Routine 1: Check for file changes and send message to WebSocket 1
 async def file_watcher(websocket_1):
     global last_mod_time
+    sample_time = 0.02 # sample file every 20 msec
     print("Starting file watcher routine")
 
     while True:
@@ -70,16 +71,16 @@ async def file_watcher(websocket_1):
             # Check file modification time
             current_mod_time = os.path.getmtime(FILE_PATH)
             if last_mod_time is None or current_mod_time != last_mod_time:
+                print ("*** changed ***")
                 last_mod_time = current_mod_time
                 print("File modified. Running diagram")
                 await run (websocket_1)
                 
-            # Check for changes every 2 seconds
-            await asyncio.sleep(.1)
+            await asyncio.sleep(sample_time)
         
         except FileNotFoundError:
             print("File not found. Waiting for it to appear...")
-            await asyncio.sleep(.1)  # Retry if the file doesn't exist
+            await asyncio.sleep(sample_time)  # Retry if the file doesn't exist
 
 # Routine 2: Listen for messages from WebSocket 2 and respond
 async def browser_ide(websocket, path):

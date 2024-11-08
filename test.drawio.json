@@ -8,16 +8,12 @@
                 "id": 8
             },
             {
-                "name": "?C",
-                "id": 10
-            },
-            {
                 "name": "?A",
                 "id": 12
             },
             {
                 "name": "Echo",
-                "id": 15
+                "id": 14
             }
         ],
         "connections": [
@@ -30,7 +26,7 @@
                 "source_port": "",
                 "target": {
                     "name": "Echo",
-                    "id": 15
+                    "id": 8
                 },
                 "target_port": ""
             },
@@ -43,7 +39,7 @@
                 "source_port": "",
                 "target": {
                     "name": "Echo",
-                    "id": 8
+                    "id": 14
                 },
                 "target_port": ""
             },
@@ -61,15 +57,15 @@
                 "target_port": ""
             },
             {
-                "dir": 1,
+                "dir": 2,
                 "source": {
                     "name": "Echo",
-                    "id": 15
+                    "id": 8
                 },
                 "source_port": "",
                 "target": {
-                    "name": "?C",
-                    "id": 10
+                    "name": "",
+                    "id": 0
                 },
                 "target_port": ""
             },
@@ -90,20 +86,7 @@
                 "dir": 2,
                 "source": {
                     "name": "Echo",
-                    "id": 15
-                },
-                "source_port": "",
-                "target": {
-                    "name": "",
-                    "id": 0
-                },
-                "target_port": ""
-            },
-            {
-                "dir": 2,
-                "source": {
-                    "name": "Echo",
-                    "id": 8
+                    "id": 14
                 },
                 "source_port": "",
                 "target": {
