@@ -8,7 +8,7 @@
                 "id": 8
             },
             {
-                "name": "?B",
+                "name": "?C",
                 "id": 10
             },
             {
@@ -68,7 +68,7 @@
                 },
                 "source_port": "",
                 "target": {
-                    "name": "?B",
+                    "name": "?C",
                     "id": 10
                 },
                 "target_port": ""

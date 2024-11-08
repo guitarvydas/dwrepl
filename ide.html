@@ -30,7 +30,8 @@
 
     <script>
         // Open a WebSocket connection to the server
-        const socket = new WebSocket('ws://localhost:8766');
+        const socket1 = new WebSocket('ws://localhost:8765');
+        const socket2 = new WebSocket('ws://localhost:8766');
 
         // Get the textarea, button, and readonly textarea elements
         const inputarea = document.getElementById('input');
@@ -39,28 +40,28 @@
 
       // Send the content of the 'input' textarea on input change
       inputarea.addEventListener('input', () => {
-          if (socket.readyState === WebSocket.OPEN) {
+          if (socket2.readyState === WebSocket.OPEN) {
               const message = JSON.stringify({
                   name: inputarea.id,
                   content: inputarea.value
               });
-              socket.send(message);
+              socket2.send(message);
           }
       });
 
       // Send the content of the 'filename' textarea on input change
       filenamearea.addEventListener('input', () => {
-          if (socket.readyState === WebSocket.OPEN) {
+          if (socket2.readyState === WebSocket.OPEN) {
               const message = JSON.stringify({
                   name: filenamearea.id,
                   content: filenamearea.value
               });
-              socket.send(message);
+              socket2.send(message);
           }
       });
 
-        // Handle incoming messages from the server
-        socket.addEventListener('message', (event) => {
+        // Handle incoming messages from the server 1
+        socket1.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
 	    console.log (event.data);
 	    console.log (data);
@@ -72,17 +73,44 @@
         });
 
       // Handle connection open
-      socket.onopen = () => {
-          console.log("Connected to WebSocket server.");
+      socket1.onopen = () => {
+          console.log("Connected to WebSocket 1 server.");
       };
       // Handle connection closure
-      socket.onclose = () => {
-          console.log("Disconnected from WebSocket server.");
+      socket1.onclose = () => {
+          console.log("Disconnected from WebSocket 1 server.");
       };
       
         // Handle connection errors
-        socket.addEventListener('error', (error) => {
-            console.error('WebSocket error:', error);
+        socket1.addEventListener('error', (error) => {
+            console.error('WebSocket 1 error:', error);
+        });
+
+
+        // Handle incoming messages from the server 2
+        socket2.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+	    console.log (event.data);
+	    console.log (data);
+
+            output.value = data.output;
+	    A.value = data.A;
+	    B.value = data.B;
+	    C.value = data.C;
+        });
+
+      // Handle connection open
+      socket2.onopen = () => {
+          console.log("Connected to WebSocket 2 server.");
+      };
+      // Handle connection closure
+      socket2.onclose = () => {
+          console.log("Disconnected from WebSocket 2 server.");
+      };
+      
+        // Handle connection errors
+        socket2.addEventListener('error', (error) => {
+            console.error('WebSocket 2 error:', error);
         });
     </script>
 </body>

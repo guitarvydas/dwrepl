@@ -8,6 +8,8 @@ import subprocess
 import os
 import time
 
+import echo
+
 
 def initialize_hard_coded_test (arg):
     palette = zd.initialize_component_palette ('.', '.', ['test.drawio.json'])
@@ -61,18 +63,38 @@ async def file_watcher(websocket_1):
             await asyncio.sleep(2)  # Retry if the file doesn't exist
 
 # Routine 2: Listen for messages from WebSocket 2 and respond
-async def websocket_2_handler(websocket, path):
+async def browser_ide(websocket, path):
     print("Client connected to WebSocket 2")
     try:
         async for message in websocket:
             print(f"Received from WebSocket 2: {message}")
-            response = json.dumps({
-                "output": f"Server response: {message}",
-                "A": "probe A",
-                "B": "probe B",
-                "C": "probe C",
-            })
-            await websocket.send(response)
+            data = json.loads(message)
+            element_name = data['name']
+            content = data ['content']
+
+            if element_name == 'input' and (content != "" and content [-1] == '\n'):
+                output.reset ()
+                print (f'transpiling diagram {filenameBuffer}')
+                transpileDiagram (filenameBuffer)
+                print (f'running diagram {output.buffers}')
+                interpretDiagram (inputBuffer)
+                print ("sending output")
+                
+                # Respond with an update for the readonly textarea
+                jsondumps = json.dumps({
+                    "output": output.get ("stdout"),
+                    "A": output.get ("A"),
+                    "B": output.get ("B"),
+                    "C": output.get ("C"),
+                })
+                print (f'sending {jsondumps}')
+                print (output.buffers)
+                response_message = jsondumps
+                await websocket.send(response_message)
+            elif element_name == 'input':
+                inputBuffer = content
+            elif element_name == 'filename':
+                filenameBuffer = content
     except websockets.ConnectionClosed:
         print("Client disconnected from WebSocket 2")
 
@@ -84,15 +106,15 @@ async def websocket_1_server_handler(websocket, path):
 # Function to start both WebSocket servers
 async def start_servers():
     # Start WebSocket Server 1 on port 8765 (for file watcher)
-    websocket_1_server = await websockets.serve(websocket_1_server_handler, "localhost", 8765)
+    file_watcher_server = await websockets.serve(websocket_1_server_handler, "localhost", 8765)
     print("WebSocket 1 server started on ws://localhost:8765")
 
     # Start WebSocket Server 2 on port 8766 (for client communication)
-    websocket_2_server = await websockets.serve(websocket_2_handler, "localhost", 8766)
+    ide_server = await websockets.serve(browser_ide, "localhost", 8766)
     print("WebSocket 2 server started on ws://localhost:8766")
 
     # Keep both servers running indefinitely
-    await asyncio.gather(websocket_1_server.wait_closed(), websocket_2_server.wait_closed())
+    await asyncio.gather(file_watcher_server.wait_closed(), ide_server.wait_closed())
 
 # Run the servers
 asyncio.run(start_servers())
