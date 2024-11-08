@@ -10,6 +10,8 @@ import time
 
 import echo
 
+inputBuffer = ""
+filenameBuffer = ""
 
 def initialize_hard_coded_test (arg):
     palette = zd.initialize_component_palette ('.', '.', ['test.drawio.json'])
@@ -30,7 +32,26 @@ def interpretDiagram (arg):
     echo.install (palette)
     zd.start (palette, env)
 
-
+async def run (websocket):
+    global inputBuffer, filenameBuffer
+    output.reset ()
+    print (f'transpiling diagram {filenameBuffer}')
+    transpileDiagram (filenameBuffer)
+    print (f'running diagram {output.buffers}')
+    interpretDiagram (inputBuffer)
+    print ("sending output")
+    
+    # Respond with an update for the readonly textarea
+    jsondumps = json.dumps({
+        "output": output.get ("stdout"),
+        "A": output.get ("A"),
+        "B": output.get ("B"),
+        "C": output.get ("C"),
+    })
+    print (f'sending {jsondumps}')
+    print (output.buffers)
+    response_message = jsondumps
+    await websocket.send(response_message)
 
 
 # Path to the file to monitor for changes
@@ -50,20 +71,19 @@ async def file_watcher(websocket_1):
             current_mod_time = os.path.getmtime(FILE_PATH)
             if last_mod_time is None or current_mod_time != last_mod_time:
                 last_mod_time = current_mod_time
-                print("File modified. Sending update to WebSocket 1")
-                
-                # Send a notification to WebSocket 1
-                await websocket_1.send("File has been modified")
+                print("File modified. Running diagram")
+                await run (websocket_1)
                 
             # Check for changes every 2 seconds
-            await asyncio.sleep(2)
+            await asyncio.sleep(.1)
         
         except FileNotFoundError:
             print("File not found. Waiting for it to appear...")
-            await asyncio.sleep(2)  # Retry if the file doesn't exist
+            await asyncio.sleep(.1)  # Retry if the file doesn't exist
 
 # Routine 2: Listen for messages from WebSocket 2 and respond
 async def browser_ide(websocket, path):
+    global inputBuffer, filenameBuffer
     print("Client connected to WebSocket 2")
     try:
         async for message in websocket:
@@ -73,24 +93,7 @@ async def browser_ide(websocket, path):
             content = data ['content']
 
             if element_name == 'input' and (content != "" and content [-1] == '\n'):
-                output.reset ()
-                print (f'transpiling diagram {filenameBuffer}')
-                transpileDiagram (filenameBuffer)
-                print (f'running diagram {output.buffers}')
-                interpretDiagram (inputBuffer)
-                print ("sending output")
-                
-                # Respond with an update for the readonly textarea
-                jsondumps = json.dumps({
-                    "output": output.get ("stdout"),
-                    "A": output.get ("A"),
-                    "B": output.get ("B"),
-                    "C": output.get ("C"),
-                })
-                print (f'sending {jsondumps}')
-                print (output.buffers)
-                response_message = jsondumps
-                await websocket.send(response_message)
+                await run (websocket)
             elif element_name == 'input':
                 inputBuffer = content
             elif element_name == 'filename':
