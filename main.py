@@ -83,7 +83,7 @@ async def file_watcher(websocket_1):
             await asyncio.sleep(sample_time)  # Retry if the file doesn't exist
 
 # Routine 2: Listen for messages from WebSocket 2 and respond
-async def browser_ide(websocket, path):
+async def browser_ide(websocket):
     global inputBuffer, filenameBuffer
     print("Client connected to WebSocket 2")
     try:
@@ -103,7 +103,7 @@ async def browser_ide(websocket, path):
         print("Client disconnected from WebSocket 2")
 
 # WebSocket Server 1: Placeholder for file watcher to connect and send updates
-async def websocket_1_server_handler(websocket, path):
+async def websocket_1_server_handler(websocket):
     print("WebSocket 1 server handler started")
     await file_watcher(websocket)
 
