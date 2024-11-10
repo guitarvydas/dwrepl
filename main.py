@@ -23,7 +23,7 @@ FILE_PATH = "test.drawio"
 last_mod_time = None
 
 # Routine 1: Check for file changes and send message to WebSocket 1
-async def file_watcher(websocket_1):
+async def file_watcher(wsock):
     global last_mod_time
     sample_time = 0.02 # sample file every 20 msec
     print("Starting file watcher routine")
@@ -37,7 +37,7 @@ async def file_watcher(websocket_1):
                 last_mod_time = current_mod_time
                 print("File modified. Running diagram")
                 j = json.dumps (run ())
-                await websocket_1.send (j)
+                await wsock.send (j)
                 
             await asyncio.sleep(sample_time)
         
@@ -45,41 +45,41 @@ async def file_watcher(websocket_1):
             print("File not found. Waiting for it to appear...")
             await asyncio.sleep(sample_time)  # Retry if the file doesn't exist
 
-# Routine 2: Listen for messages from WebSocket 2 and respond
-async def browser_ide(websocket):
+# Routine 2: Listen for messages from GUI and respond
+async def browser_ide(wsock):
     global inputBuffer, filenameBuffer
-    print("Client connected to WebSocket 2")
+    print("Client connected to GUI socket")
     try:
-        async for message in websocket:
-            print(f"Received from WebSocket 2: {message}")
+        async for message in wsock:
+            print(f"Received from GUI: {message}")
             data = json.loads(message)
             element_name = data['name']
             content = data ['content']
 
             if element_name == 'input' and (content != "" and content [-1] == '\n'):
                 j = json.dumps (run ())
-                await websocket.send (j)
+                await wsock.send (j)
             elif element_name == 'input':
                 inputBuffer = content
             elif element_name == 'filename':
                 filenameBuffer = content
     except websockets.ConnectionClosed:
-        print("Client disconnected from WebSocket 2")
+        print("Client disconnected from GUI")
 
 # WebSocket Server 1: Placeholder for file watcher to connect and send updates
-async def websocket_1_server_handler(websocket):
-    print("WebSocket 1 server handler started")
+async def file_watcher_server_handler(websocket):
+    print("file watcher server handler started")
     await file_watcher(websocket)
 
 # Function to start both WebSocket servers
 async def start_servers():
     # Start WebSocket Server 1 on port 8765 (for file watcher)
-    file_watcher_server = await websockets.serve(websocket_1_server_handler, "localhost", 8765)
-    print("WebSocket 1 server started on ws://localhost:8765")
+    file_watcher_server = await websockets.serve(file_watcher_server_handler, "localhost", 8765)
+    print("file watcher WebSocket server started on ws://localhost:8765")
 
     # Start WebSocket Server 2 on port 8766 (for client communication)
     ide_server = await websockets.serve(browser_ide, "localhost", 8766)
-    print("WebSocket 2 server started on ws://localhost:8766")
+    print("GUI websocket server started on ws://localhost:8766")
 
     # Keep both servers running indefinitely
     await asyncio.gather(file_watcher_server.wait_closed(), ide_server.wait_closed())
