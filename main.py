@@ -36,8 +36,7 @@ async def file_watcher(websocket_1):
                 print ("*** changed ***")
                 last_mod_time = current_mod_time
                 print("File modified. Running diagram")
-                r = run ()
-                j = json.dumps (r)
+                j = json.dumps (run ())
                 await websocket_1.send (j)
                 
             await asyncio.sleep(sample_time)
@@ -58,8 +57,7 @@ async def browser_ide(websocket):
             content = data ['content']
 
             if element_name == 'input' and (content != "" and content [-1] == '\n'):
-                r = run ()
-                j = json.dumps (r)
+                j = json.dumps (run ())
                 await websocket.send (j)
             elif element_name == 'input':
                 inputBuffer = content
