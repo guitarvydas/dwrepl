@@ -1,56 +1,19 @@
-import py0dws as zd
 import sys
 import asyncio
 import websockets
 import json
-import output
-import subprocess
 import os
 import time
 
-import echo
+import compile_and_run
 
 inputBuffer = ""
 filenameBuffer = ""
 
-def initialize_hard_coded_test (arg):
-    palette = zd.initialize_component_palette ('.', '.', ['test.drawio.json'])
-    return [palette, ['.', '.', 'main', ['test.drawio.json'], arg]]
-
-def transpileDiagram (fname):
-    ret = subprocess.run (['./das2json/mac/das2json', f'{fname}'], capture_output=True, encoding='utf-8')
-    if  not (ret.returncode == 0):
-        if ret.stderr != None:
-            output.append ("stderr", ret.stderr)
-        else:
-            output.append ("stderr", f"error in shell_out {ret.returncode}")
-    else:
-        return output.append ("stdout", ret.stdout)
-
-def interpretDiagram (arg):
-    [palette, env] = initialize_hard_coded_test (arg)
-    echo.install (palette)
-    zd.start (palette, env)
-
 async def run (websocket):
     global inputBuffer, filenameBuffer
-    output.reset ()
-    print (f'transpiling diagram {filenameBuffer}')
-    transpileDiagram (filenameBuffer)
-    print (f'running diagram {output.buffers}')
-    interpretDiagram (inputBuffer)
-    print ("sending output")
-    
-    # Respond with an update for the readonly textarea
-    jsondumps = json.dumps({
-        "output": output.get ("stdout"),
-        "A": output.get ("A"),
-        "B": output.get ("B"),
-        "C": output.get ("C"),
-    })
-    print (f'sending {jsondumps}')
-    print (output.buffers)
-    response_message = jsondumps
+    r = compile_and_run.compile_and_run (filenameBuffer, inputBuffer)
+    response_message = json.dumps(r)
     await websocket.send(response_message)
 
 
