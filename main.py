@@ -10,11 +10,10 @@ import compile_and_run
 inputBuffer = ""
 filenameBuffer = ""
 
-async def run (websocket):
+def run ():
     global inputBuffer, filenameBuffer
     r = compile_and_run.compile_and_run (filenameBuffer, inputBuffer)
-    response_message = json.dumps(r)
-    await websocket.send(response_message)
+    return r
 
 
 # Path to the file to monitor for changes
@@ -37,7 +36,9 @@ async def file_watcher(websocket_1):
                 print ("*** changed ***")
                 last_mod_time = current_mod_time
                 print("File modified. Running diagram")
-                await run (websocket_1)
+                r = run ()
+                j = json.dumps (r)
+                await websocket_1.send (j)
                 
             await asyncio.sleep(sample_time)
         
@@ -57,7 +58,9 @@ async def browser_ide(websocket):
             content = data ['content']
 
             if element_name == 'input' and (content != "" and content [-1] == '\n'):
-                await run (websocket)
+                r = run ()
+                j = json.dumps (r)
+                await websocket.send (j)
             elif element_name == 'input':
                 inputBuffer = content
             elif element_name == 'filename':
