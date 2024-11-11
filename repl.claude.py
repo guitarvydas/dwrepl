@@ -56,19 +56,9 @@ async def gui():
             # Wait for input from GUI
             message = await from_gui.recv()
             input_from_gui = json.loads(message)
-            print (f'from_gui {input_from_gui}')
-            v = input_from_gui.keys()
-            w = haskey(input_from_gui, 'input')
-            ww = None
-            if "input" in input_from_gui:
-                ww = True
-            else:
-                ww = False
-            x = input_from_gui['input'].endswith("\n")
-            print (f'  {v} {w} {ww} {x}')
             
             # Check if input exists and ends with newline
-            if to_gui and haskey(input_from_gui, 'input') and input_from_gui ['input'].endswith('\n'):
+            if input_from_gui and haskey(input_from_gui, 'input') and input_from_gui ['input'].endswith('\n'):
                 # Run compiler with input from GUI
                 result = compile_and_run(
                     file_being_watched,
