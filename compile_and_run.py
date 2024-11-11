@@ -27,10 +27,11 @@ def compile_and_run (filename, input_text):
     output.reset ()
     print (f'transpiling diagram {filename}')
     transpileDiagram (filename)
-    print (f'running diagram {output.buffers}')
+    print (f'running diagram {filename} with input "{input_text}"')
     interpretDiagram (input_text)
     return {
         "output" : output.get ("stdout"),
+        "errors" : output.get ("stderr"),
         "A" : output.get ("A"),
         "B": output.get ("B"),
         "C": output.get ("C"),

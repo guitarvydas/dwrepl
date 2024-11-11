@@ -933,6 +933,7 @@ def forward (eh, port, msg):
     put_output (eh, msg)
 
 def inject (eh, msg):
+    print (f'injecting "{msg.port}":"{msg.datum.srepr ()}"')
     eh.inject (eh, msg)
 
 # Returns a list of all output messages on a container.

@@ -30,8 +30,8 @@
 
     <script>
         // Open a WebSocket connection to the server
-        const socket1 = new WebSocket('ws://localhost:8765');
-        const socket2 = new WebSocket('ws://localhost:8766');
+        const to_gui = new WebSocket('ws://localhost:8765');
+        const from_gui = new WebSocket('ws://localhost:8766');
 
         // Get the textarea, button, and readonly textarea elements
         const inputarea = document.getElementById('input');
@@ -40,28 +40,26 @@
 
       // Send the content of the 'input' textarea on input change
       inputarea.addEventListener('input', () => {
-          if (socket2.readyState === WebSocket.OPEN) {
-              const message = JSON.stringify({
-                  name: inputarea.id,
-                  content: inputarea.value
-              });
-              socket2.send(message);
+	  console.log (`input event`);
+          if (from_gui.readyState === WebSocket.OPEN) {
+	      let d = { [inputarea.id] : inputarea.value };
+              const message = JSON.stringify(d);
+	      console.log (`input event sending ${message}`);
+              from_gui.send(message);
           }
       });
 
       // Send the content of the 'filename' textarea on input change
       filenamearea.addEventListener('input', () => {
-          if (socket2.readyState === WebSocket.OPEN) {
-              const message = JSON.stringify({
-                  name: filenamearea.id,
-                  content: filenamearea.value
-              });
-              socket2.send(message);
+          if (from_gui.readyState === WebSocket.OPEN) {
+              let d = { [filenamearea.id]: filenamearea.value };
+	      const message = JSON.stringify(d);
+              from_gui.send(message);
           }
       });
 
         // Handle incoming messages from the server 1
-        socket1.addEventListener('message', (event) => {
+        to_gui.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
 	    console.log (event.data);
 	    console.log (data);
@@ -73,22 +71,22 @@
         });
 
       // Handle connection open
-      socket1.onopen = () => {
+      to_gui.onopen = () => {
           console.log("Connected to WebSocket 1 server.");
       };
       // Handle connection closure
-      socket1.onclose = () => {
+      to_gui.onclose = () => {
           console.log("Disconnected from WebSocket 1 server.");
       };
       
         // Handle connection errors
-        socket1.addEventListener('error', (error) => {
+        to_gui.addEventListener('error', (error) => {
             console.error('WebSocket 1 error:', error);
         });
 
 
         // Handle incoming messages from the server 2
-        socket2.addEventListener('message', (event) => {
+        from_gui.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
 	    console.log (event.data);
 	    console.log (data);
@@ -100,16 +98,16 @@
         });
 
       // Handle connection open
-      socket2.onopen = () => {
+      from_gui.onopen = () => {
           console.log("Connected to WebSocket 2 server.");
       };
       // Handle connection closure
-      socket2.onclose = () => {
+      from_gui.onclose = () => {
           console.log("Disconnected from WebSocket 2 server.");
       };
       
         // Handle connection errors
-        socket2.addEventListener('error', (error) => {
+        from_gui.addEventListener('error', (error) => {
             console.error('WebSocket 2 error:', error);
         });
     </script>
