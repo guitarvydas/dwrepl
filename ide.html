@@ -18,8 +18,8 @@
     <h3>Output:</h3>
     <textarea id="output" rows="10" cols="80" readonly></textarea>
 
-    <h3>Errors:</h3>
-    <textarea id="output" rows="1" cols="30" readonly></textarea>
+    <h3>Error:</h3>
+    <textarea id="error" rows="1" cols="30" readonly></textarea>
 
     <h3>Probes (A,B,C):</h3>
     <textarea id="A" rows="3" cols="30" readonly></textarea>
@@ -60,14 +60,7 @@
 
         // Handle incoming messages from the server 1
         to_gui.addEventListener('message', (event) => {
-            const data = JSON.parse(event.data);
-	    console.log (event.data);
-	    console.log (data);
-
-            output.value = data.output;
-	    A.value = data.A;
-	    B.value = data.B;
-	    C.value = data.C;
+	    set_field_values (event);
         });
 
       // Handle connection open
@@ -79,7 +72,7 @@
           console.log("Disconnected from WebSocket 1 server.");
       };
       
-        // Handle connection errors
+        // Handle connection error
         to_gui.addEventListener('error', (error) => {
             console.error('WebSocket 1 error:', error);
         });
@@ -87,14 +80,7 @@
 
         // Handle incoming messages from the server 2
         from_gui.addEventListener('message', (event) => {
-            const data = JSON.parse(event.data);
-	    console.log (event.data);
-	    console.log (data);
-
-            output.value = data.output;
-	    A.value = data.A;
-	    B.value = data.B;
-	    C.value = data.C;
+	    set_field_values (event);
         });
 
       // Handle connection open
@@ -110,6 +96,25 @@
         from_gui.addEventListener('error', (error) => {
             console.error('WebSocket 2 error:', error);
         });
+
+      function set_field_values (event) {
+            const data = JSON.parse(event.data);
+	    console.log (event.data);
+	    console.log (data);
+
+          if (!data.output) { data.output = "."; }
+	  if (!data.error) { data.error = "."; }
+	  if (!data.A) { data.A = "."; }
+	  if (!data.B) { data.B = "."; }
+	  if (!data.C) { data.C = "."; }
+	  
+          output.value = data.output.trim ();
+          error.value = data.error.trim ();
+	  A.value = data.A.trim ();
+	  B.value = data.B.trim ();
+	  C.value = data.C.trim ();
+      }
+      
     </script>
 </body>
 </html>

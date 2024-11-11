@@ -1,6 +1,7 @@
 import py0dws as zd
 import output
 import subprocess
+import json
 
 import echo
 
@@ -29,10 +30,4 @@ def compile_and_run (filename, input_text):
     transpileDiagram (filename)
     print (f'running diagram {filename} with input "{input_text}"')
     interpretDiagram (input_text)
-    return {
-        "output" : output.get ("stdout"),
-        "errors" : output.get ("stderr"),
-        "A" : output.get ("A"),
-        "B": output.get ("B"),
-        "C": output.get ("C"),
-        }
+    return output.buffers
