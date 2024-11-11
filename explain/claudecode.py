@@ -1101,6 +1101,141 @@ if __name__ == "__main__":
 
 ###
 ###
-###
+### 7e
+
+This line creates a websocket server and uses a lambda function to set a global variable. Let me break it down:
+
+1. `websockets.serve()` starts a websocket server on localhost:8765
+2. The lambda function `lambda ws, path: setattr(__import__('__main__'), 'to_gui', ws)` is called whenever a client connects
+3. `setattr(__import__('__main__'), 'to_gui', ws)` is a complex way to set a global variable
+
+You're right to question this - it's unnecessarily complex. Here's a clearer way to write it:
+
+```python
+"""
+This program implements a REPL system with the following components:
+- Two websockets: to_gui (8765) and from_gui (8766)
+- Two coroutines: gui and file_watcher
+- Monitors test.drawio for changes
+- Handles JSON input from GUI
+- Compiles and runs code based on file changes or GUI input
+- Sends results back to GUI as JSON
+"""
+
+import asyncio
+import websockets
+import json
+import os
+import time
+from compile_and_run import compile_and_run
+
+# Global variables
+file_being_watched = "test.drawio"
+input_from_gui = None
+last_mod_time = 0
+to_gui = None
+from_gui = None
+
+async def handle_to_gui(websocket):
+    global to_gui
+    to_gui = websocket
+    try:
+        await websocket.wait_closed()
+    finally:
+        to_gui = None
+
+async def handle_from_gui(websocket):
+    global from_gui
+    from_gui = websocket
+    try:
+        await websocket.wait_closed()
+    finally:
+        from_gui = None
+
+async def gui():
+    global input_from_gui
     
+    while True:
+        try:
+            if from_gui is None:
+                await asyncio.sleep(0.1)
+                continue
+
+            # Wait for input from GUI
+            message = await from_gui.recv()
+            input_from_gui = json.loads(message)
+            
+            # Check if input exists and ends with newline
+            if to_gui and hasattr(input_from_gui, 'input') and input_from_gui.input.endswith('\n'):
+                # Run compiler with input from GUI
+                result = compile_and_run(
+                    file_being_watched,
+                    input_from_gui.input if hasattr(input_from_gui, 'input') else ""
+                )
+                
+                # Send result to GUI
+                await to_gui.send(json.dumps(result))
+                
+        except websockets.exceptions.ConnectionClosed:
+            continue
+        except Exception as e:
+            print(f"Error in gui coroutine: {e}")
+
+async def file_watcher():
+    global last_mod_time
+    
+    while True:
+        try:
+            if to_gui is None:
+                await asyncio.sleep(0.1)
+                continue
+
+            current_mod_time = os.path.getmtime(file_being_watched)
+            
+            if current_mod_time > last_mod_time:
+                # File has been modified
+                last_mod_time = current_mod_time
+                
+                # Run compiler with current GUI input if it exists
+                result = compile_and_run(
+                    file_being_watched,
+                    input_from_gui.input if input_from_gui and hasattr(input_from_gui, 'input') else ""
+                )
+                
+                # Send result to GUI
+                await to_gui.send(json.dumps(result))
+                
+            await asyncio.sleep(0.02)  # Check every 20ms
+            
+        except Exception as e:
+            print(f"Error in file_watcher coroutine: {e}")
+            await asyncio.sleep(0.02)  # Continue checking even if there's an error
+
+async def repl():
+    # Start the websocket servers
+    async with \
+        websockets.serve(handle_to_gui, "localhost", 8765), \
+        websockets.serve(handle_from_gui, "localhost", 8766):
+        
+        # Create tasks for GUI and file watcher
+        gui_task = asyncio.create_task(gui())
+        watcher_task = asyncio.create_task(file_watcher())
+        
+        # Keep the servers running
+        await asyncio.Future()  # run forever
+
+if __name__ == "__main__":
+    asyncio.run(repl())
+
+```
+
+Key improvements:
+1. Uses clear handler functions instead of lambdas
+2. Properly manages the websocket lifecycle by waiting for connection close
+3. Sets globals directly in the handler functions
+4. Cleans up globals when connections close
+
+This version is more readable and handles connections/disconnections more robustly. The handler functions properly set the global variables when clients connect and clear them when clients disconnect.
+
+Would you like me to explain any other parts of the implementation?
 

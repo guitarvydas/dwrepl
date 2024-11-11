@@ -29,10 +29,10 @@ async def gui(websocket):
         # Check if the last character is a newline
         if input_data.endswith("\n"):
             # Run the compile_and_run function and capture output
-            stdout, stderr = compile_and_run(input_data)
+            dict = compile_and_run(input_data)
             
             # Send output as JSON back to the GUI WebSocket
-            output = json.dumps({"stdout": stdout, "stderr": stderr})
+            output = json.dumps(dict)
             await websocket.send(output)
 
 # Coroutine to monitor a file for modifications and trigger compile_and_run
@@ -47,11 +47,12 @@ async def file_watcher():
             last_mtime = current_mtime  # Update last modification time
             
             # Run the compile_and_run function and capture output
-            stdout, stderr = compile_and_run(input_data if input_data else "")
+           dict = compile_and_run(input_data if input_data else "")
             
             # Send output as JSON to the GUI WebSocket if connected
             if guisocket:
-                output = json.dumps({"stdout": stdout, "stderr": stderr})
+                print (f'file_watcher {dict}')
+                output = json.dumps(dict)
                 await guisocket.send(output)
 
 # Main function to start the WebSocket server and run coroutines
