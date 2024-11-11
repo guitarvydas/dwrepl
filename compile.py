@@ -13,5 +13,5 @@ def transpileDiagram (fname):
 
 def compile (filename):
     print (f'transpiling diagram {filename}')
-    transpileDiagram (filename)
+    return transpileDiagram (filename)
     
