@@ -13,10 +13,10 @@ def interpretDiagram (arg):
     [palette, env] = initialize_hard_coded_test (arg)
     echo.install (palette)
     zd.start (palette, env)
+    return output.buffers
 
 def run (filename, input_text):
     print (f'running diagram {filename} with input "{input_text}"')
     output.reset ()
-    interpretDiagram (input_text)
-    # must return dictionary containing outputs {stdout: ...string..., stderr:...string...}
-    return output.buffers
+    # must return dictionary containing outputs {output: ...string..., error:...string...}, i.e. JSON
+    return interpretDiagram (input_text)
