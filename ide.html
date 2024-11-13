@@ -98,15 +98,26 @@
         });
 
       function set_field_values (event) {
-            const data = JSON.parse(event.data);
-	    console.log (event.data);
-	    console.log (data);
+          let data = JSON.parse(event.data);
+	  console.log (event.data);
+	  console.log (data);
+	  console.log (typeof (data));
+	  if (data.output) {
+	      // on a successful run, data.output contains JSON
+	      data = JSON.parse (data.output);
+	      console.log (data);
+	      console.log (typeof (data));
+	  } else if (data.error) {
+	      // on failure, data.output doesn't exist and data.error contains an error message
+	      // pass
+	  }
+	  
 
-          if (!data.output) { data.output = "."; }
-	  if (!data.error) { data.error = "."; }
-	  if (!data.A) { data.A = "."; }
-	  if (!data.B) { data.B = "."; }
-	  if (!data.C) { data.C = "."; }
+          if (!data.output) { data.output = ""; }
+	  if (!data.error) { data.error = ""; }
+	  if (!data.A) { data.A = ""; }
+	  if (!data.B) { data.B = ""; }
+	  if (!data.C) { data.C = ""; }
 	  
           output.value = data.output.trim ();
           error.value = data.error.trim ();
