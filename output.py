@@ -3,7 +3,6 @@ buffers = { }
 def reset ():
     global buffers
     buffers = { }
-    print (f'    reset buffers = {buffers}')
     
 def append (buffname, s):
     global buffers

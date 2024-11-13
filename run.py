@@ -1,22 +1,15 @@
-import py0dws as zd
-import output
 import subprocess
-import json
-
-import echo
-
-def initialize_hard_coded_test (arg):
-    palette = zd.initialize_component_palette ('.', '.', ['test.drawio.json'])
-    return [palette, ['.', '.', 'main', ['test.drawio.json'], arg]]
-
-def interpretDiagram (arg):
-    [palette, env] = initialize_hard_coded_test (arg)
-    echo.install (palette)
-    zd.start (palette, env)
-    return output.get ()
+import output
 
 def run (filename, input_text):
-    print (f'running diagram {filename} with input "{input_text}"')
     output.reset ()
-    # must return dictionary containing outputs {output: ...string..., error:...string...}, i.e. JSON
-    return json.dumps (interpretDiagram (input_text))
+    print (f'running diagram {filename} with input "{input_text}"')
+    ret = subprocess.run (['python3', 'subprocess_run.py', f'{filename}', f'{input_text}'], capture_output=True, encoding='utf-8')
+    if  not (ret.returncode == 0):
+        if ret.stderr != None:
+            output.append ("error", ret.stderr)
+        else:
+            output.append ("error", f"error in shell_out {ret.returncode}")
+    else:
+        output.append ("output", ret.stdout)
+    return output.get ()
