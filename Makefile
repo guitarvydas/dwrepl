@@ -4,7 +4,7 @@ D2J=./das2json/mac/das2json
 
 all:
 	${D2J} test.drawio
-	python3 main.py . - "Hello World" main test.drawio.json
+	python3 repl.claude.py . - "Hello World" main test.drawio.json
 
 ## house-keeping
 

@@ -18,9 +18,6 @@
     <h3>Output:</h3>
     <textarea id="output" rows="10" cols="80" readonly></textarea>
 
-    <h3>Errors:</h3>
-    <textarea id="output" rows="1" cols="30" readonly></textarea>
-
     <h3>Probes (A,B,C):</h3>
     <textarea id="A" rows="3" cols="30" readonly></textarea>
 
@@ -28,10 +25,13 @@
 
     <textarea id="C" rows="3" cols="30" readonly></textarea>
 
+    <h3>Error:</h3>
+    <textarea id="error" rows="10" cols="80" readonly></textarea>
+
     <script>
         // Open a WebSocket connection to the server
-        const socket1 = new WebSocket('ws://localhost:8765');
-        const socket2 = new WebSocket('ws://localhost:8766');
+        const to_gui = new WebSocket('ws://localhost:8765');
+        const from_gui = new WebSocket('ws://localhost:8766');
 
         // Get the textarea, button, and readonly textarea elements
         const inputarea = document.getElementById('input');
@@ -40,78 +40,92 @@
 
       // Send the content of the 'input' textarea on input change
       inputarea.addEventListener('input', () => {
-          if (socket2.readyState === WebSocket.OPEN) {
-              const message = JSON.stringify({
-                  name: inputarea.id,
-                  content: inputarea.value
-              });
-              socket2.send(message);
+	  console.log (`input event`);
+          if (from_gui.readyState === WebSocket.OPEN) {
+	      let d = { [inputarea.id] : inputarea.value };
+              const message = JSON.stringify(d);
+	      console.log (`input event sending ${message}`);
+              from_gui.send(message);
           }
       });
 
       // Send the content of the 'filename' textarea on input change
       filenamearea.addEventListener('input', () => {
-          if (socket2.readyState === WebSocket.OPEN) {
-              const message = JSON.stringify({
-                  name: filenamearea.id,
-                  content: filenamearea.value
-              });
-              socket2.send(message);
+          if (from_gui.readyState === WebSocket.OPEN) {
+              let d = { [filenamearea.id]: filenamearea.value };
+	      const message = JSON.stringify(d);
+              from_gui.send(message);
           }
       });
 
         // Handle incoming messages from the server 1
-        socket1.addEventListener('message', (event) => {
-            const data = JSON.parse(event.data);
-	    console.log (event.data);
-	    console.log (data);
-
-            output.value = data.output;
-	    A.value = data.A;
-	    B.value = data.B;
-	    C.value = data.C;
+        to_gui.addEventListener('message', (event) => {
+	    set_field_values (event);
         });
 
       // Handle connection open
-      socket1.onopen = () => {
+      to_gui.onopen = () => {
           console.log("Connected to WebSocket 1 server.");
       };
       // Handle connection closure
-      socket1.onclose = () => {
+      to_gui.onclose = () => {
           console.log("Disconnected from WebSocket 1 server.");
       };
       
-        // Handle connection errors
-        socket1.addEventListener('error', (error) => {
+        // Handle connection error
+        to_gui.addEventListener('error', (error) => {
             console.error('WebSocket 1 error:', error);
         });
 
 
         // Handle incoming messages from the server 2
-        socket2.addEventListener('message', (event) => {
-            const data = JSON.parse(event.data);
-	    console.log (event.data);
-	    console.log (data);
-
-            output.value = data.output;
-	    A.value = data.A;
-	    B.value = data.B;
-	    C.value = data.C;
+        from_gui.addEventListener('message', (event) => {
+	    set_field_values (event);
         });
 
       // Handle connection open
-      socket2.onopen = () => {
+      from_gui.onopen = () => {
           console.log("Connected to WebSocket 2 server.");
       };
       // Handle connection closure
-      socket2.onclose = () => {
+      from_gui.onclose = () => {
           console.log("Disconnected from WebSocket 2 server.");
       };
       
         // Handle connection errors
-        socket2.addEventListener('error', (error) => {
+        from_gui.addEventListener('error', (error) => {
             console.error('WebSocket 2 error:', error);
         });
+
+      function set_field_values (event) {
+          let data = JSON.parse(event.data);
+	  console.log (event.data);
+	  console.log (data);
+	  console.log (typeof (data));
+	  if (data.output) {
+	      // on a successful run, data.output contains JSON
+	      data = JSON.parse (data.output);
+	      console.log (data);
+	      console.log (typeof (data));
+	  } else if (data.error) {
+	      // on failure, data.output doesn't exist and data.error contains an error message
+	      // pass
+	  }
+	  
+
+          if (!data.output) { data.output = ""; }
+	  if (!data.error) { data.error = ""; }
+	  if (!data.A) { data.A = ""; }
+	  if (!data.B) { data.B = ""; }
+	  if (!data.C) { data.C = ""; }
+	  
+          output.value = data.output.trim ();
+          error.value = data.error.trim ();
+	  A.value = data.A.trim ();
+	  B.value = data.B.trim ();
+	  C.value = data.C.trim ();
+      }
+      
     </script>
 </body>
 </html>
