@@ -11,10 +11,5 @@ def append (buffname, s):
         buffers [buffname] = ""
     buffers [buffname] += (s + '\n')
 
-def get (buffname):
-    global buffers
-    if buffname in buffers:
-        return buffers [buffname]
-    else:
-        return ""
-    
+def get ():
+    return buffers
